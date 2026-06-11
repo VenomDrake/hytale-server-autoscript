@@ -1,0 +1,15 @@
+{
+  "users": {
+    "ab61be40-440f-417c-ab1a-ffe15b2a0c0d": {
+      "groups": [
+        "OP"
+      ]
+    }
+  },
+  "groups": {
+    "Default": [],
+    "OP": [
+      "*"
+    ]
+  }
+}

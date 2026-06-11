@@ -1,0 +1,19 @@
+# Hytale proprietary/server runtime files
+*.zip
+hytale-downloader-linux-amd64
+Assets.zip
+Server/
+auth.enc
+**/auth.enc
+.hytale-downloader-credentials.json
+.hytale-downloader-credentials.json*
+
+# Local backups/logs
+backups/
+*.tar.gz
+*.log
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
