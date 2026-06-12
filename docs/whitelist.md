@@ -1,5 +1,8 @@
 # Whitelist
 
+> This documentation is currently written in Italian. English docs are planned.
+
+
 File:
 
 ```text

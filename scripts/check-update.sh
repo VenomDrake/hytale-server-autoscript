@@ -8,4 +8,8 @@ installed="$(journalctl -u "$SERVICE_NAME" -b --no-pager 2>/dev/null | grep -i '
 online="$(timeout 45s sudo -u "$HT_USER" -H bash -lc "cd '$HT_HOME' && '$DL_BIN' -print-version" 2>/dev/null | tail -n 1 || true)"
 echo "Installata: ${installed:-sconosciuta}"
 echo "Online:     ${online:-sconosciuta}"
-[[ -n "$installed" && -n "$online" && "$installed" == "$online" ]] && echo "Aggiornato" || echo "Aggiornamento disponibile o versione non determinabile"
+if [[ -n "$installed" && -n "$online" && "$installed" == "$online" ]]; then
+  echo "Aggiornato"
+else
+  echo "Aggiornamento disponibile o versione non determinabile"
+fi

@@ -47,6 +47,10 @@ main() {
   require_cmd flock
   require_cmd tee
   require_cmd sudo
+  require_cmd find
+  require_cmd sort
+  require_cmd head
+  require_cmd cut
 
   touch "$LOG_FILE"
   chmod 0644 "$LOG_FILE" || true
@@ -62,8 +66,23 @@ main() {
     exit 1
   fi
 
-  log "Stop servizio ${SERVICE_NAME}"
-  systemctl stop "$SERVICE_NAME" || true
+  SERVICE_WAS_ACTIVE=0
+  if systemctl is-active --quiet "$SERVICE_NAME"; then
+    SERVICE_WAS_ACTIVE=1
+  fi
+
+  restart_service_on_failure() {
+    local exit_code="$?"
+    trap - ERR
+    if [[ "$SERVICE_WAS_ACTIVE" -eq 1 ]]; then
+      log "ERRORE: update fallito, riavvio ${SERVICE_NAME} per evitare server fermo"
+      systemctl start "$SERVICE_NAME" || log "ERRORE: impossibile riavviare ${SERVICE_NAME}"
+    else
+      log "ERRORE: update fallito; ${SERVICE_NAME} non era attivo prima dell'update, non lo avvio automaticamente"
+    fi
+    exit "$exit_code"
+  }
+  trap restart_service_on_failure ERR
 
   INSTALLED_VER="$(extract_installed_version)"
   ONLINE_VER="$(extract_online_version)"
@@ -73,28 +92,25 @@ main() {
 
   if [[ -z "${ONLINE_VER}" ]]; then
     log "ERRORE: impossibile leggere la versione online"
-    log "Avvio servizio ${SERVICE_NAME} e termino"
-    systemctl start "$SERVICE_NAME" || true
     exit 1
   fi
 
   if [[ -n "${INSTALLED_VER}" && "${ONLINE_VER}" == "${INSTALLED_VER}" ]]; then
     log "Nessun aggiornamento richiesto"
-    log "Avvio servizio ${SERVICE_NAME}"
-    systemctl start "$SERVICE_NAME"
     exit 0
   fi
 
-  log "Aggiornamento richiesto, scarico nuova versione"
+  log "Aggiornamento richiesto"
+  log "Stop servizio ${SERVICE_NAME}"
+  systemctl stop "$SERVICE_NAME" || true
   cd "$ZIP_DIR"
 
+  log "Scarico nuova versione"
   timeout 3600s sudo -u "$HT_USER" -H bash -lc "cd '$HT_HOME' && '$DL_BIN'" >/dev/null 2>&1
 
   LATEST_ZIP="$(find "$ZIP_DIR" -maxdepth 1 -type f -name '*.zip' -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -n 1 | cut -d' ' -f2- || true)"
   if [[ -z "${LATEST_ZIP}" ]]; then
     log "ERRORE: zip non trovato"
-    log "Avvio servizio ${SERVICE_NAME}"
-    systemctl start "$SERVICE_NAME" || true
     exit 1
   fi
 
@@ -105,9 +121,14 @@ main() {
   chmod +x "${HT_HOME}/start.sh"
   chown -R "${HT_USER}:${HT_USER}" "$HT_HOME"
 
-  log "Avvio servizio ${SERVICE_NAME}"
-  systemctl start "$SERVICE_NAME"
+  if [[ "$SERVICE_WAS_ACTIVE" -eq 1 ]]; then
+    log "Avvio servizio ${SERVICE_NAME}"
+    systemctl start "$SERVICE_NAME"
+  else
+    log "${SERVICE_NAME} non era attivo prima dell'update, lo lascio fermo"
+  fi
 
+  trap - ERR
   log "Fine"
 }
 

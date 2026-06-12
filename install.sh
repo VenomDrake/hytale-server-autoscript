@@ -40,15 +40,25 @@ create_user() {
 }
 
 install_downloader_and_server() {
-  log "Download Hytale Downloader CLI"
   cd "$HT_HOME"
-  curl -L -o hytale-downloader.zip "$DOWNLOADER_URL"
-  unzip -o hytale-downloader.zip
-  chmod +x hytale-downloader-linux-amd64
-  chown -R "${HT_USER}:${HT_USER}" "$HT_HOME"
+
+  if [[ ! -x "${HT_HOME}/hytale-downloader-linux-amd64" ]]; then
+    log "Download Hytale Downloader CLI"
+    curl -L -o hytale-downloader.zip "$DOWNLOADER_URL"
+    unzip -o hytale-downloader.zip
+    chmod +x hytale-downloader-linux-amd64
+    chown -R "${HT_USER}:${HT_USER}" "$HT_HOME"
+  else
+    log "Hytale Downloader CLI già presente, non lo riscarico"
+  fi
 
   log "Controllo versione online"
   sudo -u "$HT_USER" -H bash -lc "cd '$HT_HOME' && ./hytale-downloader-linux-amd64 -print-version" || warn "Controllo versione fallito: potrebbe servire autenticazione o rete."
+
+  if [[ -f "${HT_HOME}/Server/HytaleServer.jar" && -x "${HT_HOME}/start.sh" && "${FORCE_SERVER_DOWNLOAD:-0}" != "1" ]]; then
+    log "Server Hytale già presente, salto download/estrazione per non sovrascrivere installazioni esistenti"
+    return 0
+  fi
 
   log "Download server dedicato ufficiale"
   sudo -u "$HT_USER" -H bash -lc "cd '$HT_HOME' && ./hytale-downloader-linux-amd64"
@@ -66,8 +76,12 @@ install_downloader_and_server() {
 }
 
 install_config() {
-  log "Installazione jvm.options"
-  install -o "$HT_USER" -g "$HT_USER" -m 0644 "${REPO_DIR}/config/jvm.options" "${HT_HOME}/jvm.options"
+  log "Installazione configurazione"
+  if [[ ! -f "${HT_HOME}/jvm.options" || "${FORCE_JVM_OPTIONS:-0}" == "1" ]]; then
+    install -o "$HT_USER" -g "$HT_USER" -m 0644 "${REPO_DIR}/config/jvm.options" "${HT_HOME}/jvm.options"
+  else
+    log "jvm.options già presente, non lo sovrascrivo"
+  fi
   mkdir -p "${HT_HOME}/logs" "${HT_HOME}/Server"
   chown -R "${HT_USER}:${HT_USER}" "${HT_HOME}/logs" "${HT_HOME}/Server"
 }
@@ -109,18 +123,18 @@ start_service() {
 final_checks() {
   log "Verifiche finali"
   printf 'Java 25 installato: '; java --version 2>&1 | head -n 1 || true
-  printf 'Utente hytale creato: '; id "$HT_USER" >/dev/null 2>&1 && echo OK || echo KO
-  printf 'Downloader presente: '; [[ -x "${HT_HOME}/hytale-downloader-linux-amd64" ]] && echo OK || echo KO
-  printf 'Assets.zip presente: '; [[ -f "${HT_HOME}/Assets.zip" ]] && echo OK || echo KO
-  printf 'Server/HytaleServer.jar presente: '; [[ -f "${HT_HOME}/Server/HytaleServer.jar" ]] && echo OK || echo KO
-  printf 'start.sh eseguibile: '; [[ -x "${HT_HOME}/start.sh" ]] && echo OK || echo KO
+  printf 'Utente hytale creato: '; if id "$HT_USER" >/dev/null 2>&1; then echo OK; else echo KO; fi
+  printf 'Downloader presente: '; if [[ -x "${HT_HOME}/hytale-downloader-linux-amd64" ]]; then echo OK; else echo KO; fi
+  printf 'Assets.zip presente: '; if [[ -f "${HT_HOME}/Assets.zip" ]]; then echo OK; else echo KO; fi
+  printf 'Server/HytaleServer.jar presente: '; if [[ -f "${HT_HOME}/Server/HytaleServer.jar" ]]; then echo OK; else echo KO; fi
+  printf 'start.sh eseguibile: '; if [[ -x "${HT_HOME}/start.sh" ]]; then echo OK; else echo KO; fi
   printf 'systemd enabled: '; systemctl is-enabled "$SERVICE_NAME" 2>/dev/null || true
   printf 'systemd active: '; systemctl is-active "$SERVICE_NAME" 2>/dev/null || true
-  printf 'porta UDP 5520 in ascolto: '; ss -lunp | grep -q ':5520' && echo OK || echo 'non ancora in ascolto'
-  printf 'jvm.options presente: '; [[ -f "${HT_HOME}/jvm.options" ]] && echo OK || echo KO
-  printf 'autoupdate installato: '; [[ -x /usr/local/sbin/hytale-autoupdate.sh ]] && echo OK || echo KO
-  printf 'cron configurato: '; crontab -l 2>/dev/null | grep -q '/usr/local/sbin/hytale-autoupdate.sh' && echo OK || echo KO
-  printf 'timezone corretta: '; timedatectl 2>/dev/null | grep -q "$TIMEZONE" && echo OK || cat /etc/timezone
+  printf 'porta UDP 5520 in ascolto: '; if ss -lunp | grep -q ':5520'; then echo OK; else echo 'non ancora in ascolto'; fi
+  printf 'jvm.options presente: '; if [[ -f "${HT_HOME}/jvm.options" ]]; then echo OK; else echo KO; fi
+  printf 'autoupdate installato: '; if [[ -x /usr/local/sbin/hytale-autoupdate.sh ]]; then echo OK; else echo KO; fi
+  printf 'cron configurato: '; if crontab -l 2>/dev/null | grep -q '/usr/local/sbin/hytale-autoupdate.sh'; then echo OK; else echo KO; fi
+  printf 'timezone corretta: '; if timedatectl 2>/dev/null | grep -q "$TIMEZONE"; then echo OK; else cat /etc/timezone; fi
 }
 
 main() {

@@ -1,42 +1,73 @@
 # Hytale Server Manager
 
-Toolkit in stile LinuxGSM per installare, configurare, aggiornare e gestire un server dedicato Hytale su Linux, con focus su Ubuntu 24.04 LTS e container LXC Proxmox.
+Language:
+- English, current
+- Italian, [README.it.md](README.it.md)
 
-> Disclaimer: questa repository non include file proprietari Hytale, zip del server, token, `auth.enc` o credenziali OAuth. Gli script scaricano i file ufficiali tramite Hytale Downloader CLI. Serve un account Hytale valido.
+![Ubuntu 24.04](https://img.shields.io/badge/Ubuntu-24.04-E95420?logo=ubuntu&logoColor=white)
+![Java 25](https://img.shields.io/badge/Java-25-007396?logo=openjdk&logoColor=white)
+![Systemd](https://img.shields.io/badge/Systemd-service-3A3A3A?logo=linux&logoColor=white)
+![Shell scripts](https://img.shields.io/badge/Shell-scripts-4EAA25?logo=gnubash&logoColor=white)
+![License MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
-## Funzionalità
+A LinuxGSM-style toolkit to install, configure, update, and manage a dedicated Hytale server on Linux, focused on Ubuntu 24.04 LTS and Proxmox LXC containers.
 
-- Installazione Temurin 25 Adoptium.
-- Utente dedicato `hytale` e directory `/home/hytale/hytale`.
-- Download del server da `https://downloader.hytale.com/hytale-downloader.zip`.
-- Servizio `systemd` con avvio automatico e restart automatico.
-- Firewall UFW con porta Hytale QUIC `UDP 5520`.
-- `jvm.options` ottimizzato per circa 7 player reali su LXC 8 core / 32 GB RAM.
-- Backup manuali tar.gz e supporto ai backup integrati del server.
-- Autoupdate giornaliero via cron root con log separato.
-- Wrapper `./hytale` per gestione quotidiana.
+> Disclaimer: this repository does not include proprietary Hytale files, server ZIP files, tokens, `auth.enc`, or OAuth credentials. The scripts download official files through the official Hytale Downloader CLI. A valid Hytale account is required.
 
-## Requisiti consigliati
+## Features
 
-| Componente | Minimo consigliato | Ideale server piccolo |
+| Feature | Included |
+| --- | --- |
+| Auto install | Yes |
+| Auto update | Yes |
+| Manual update | Yes |
+| Backup | Yes |
+| Restore | Yes |
+| Systemd service | Yes |
+| UFW firewall | Yes |
+| OAuth device login | Documented |
+| Encrypted credential persistence | Documented |
+| Proxmox LXC support | Documented |
+| Healthcheck | Yes |
+| Monitoring | Yes |
+| GC tuning | Yes |
+| Troubleshooting docs | Yes |
+
+## Overview
+
+- Temurin 25 Adoptium installation.
+- Dedicated `hytale` user and `/home/hytale/hytale` directory.
+- Server download from `https://downloader.hytale.com/hytale-downloader.zip`.
+- `systemd` service with automatic startup and automatic restart.
+- UFW firewall rule for the Hytale QUIC port, `UDP 5520`.
+- `jvm.options` tuned for roughly 7 real players on an 8-core / 32 GB RAM LXC container.
+- Manual tar.gz backups and support for Hytale's built-in server backups.
+- Daily autoupdate through root cron with a dedicated update log.
+- `./hytale` wrapper for day-to-day operations.
+
+## Recommended requirements
+
+| Component | Recommended minimum | Ideal small server |
 | --- | --- | --- |
-| OS | Ubuntu 24.04 LTS | Ubuntu 24.04 LTS LXC Proxmox |
-| CPU | 4 core | 8 core |
+| OS | Ubuntu 24.04 LTS | Ubuntu 24.04 LTS Proxmox LXC |
+| CPU | 4 cores | 8 cores |
 | RAM | 16 GB | 32 GB |
-| Disco | 80 GB | 120 GB o più |
+| Disk | 80 GB | 120 GB or more |
 | Java | Temurin 25 | Temurin 25 JDK |
-| Porta | UDP 5520 | UDP 5520 |
+| Port | UDP 5520 | UDP 5520 |
 
 ## Quick start
 
 ```bash
-git clone <repo>
+# Replace this value with your fork or the official repository URL.
+REPO_URL="https://github.com/YOUR-USERNAME/hytale-server-manager.git"
+git clone "$REPO_URL"
 cd hytale-server-manager
 chmod +x install.sh
 sudo ./install.sh
 ```
 
-## Comandi disponibili
+## Available commands
 
 ```bash
 ./hytale start
@@ -55,32 +86,32 @@ sudo ./install.sh
 ./hytale auth-help
 ```
 
-## Installazione guidata
+## Guided installation
 
-`install.sh` esegue queste operazioni:
+`install.sh` performs these steps:
 
-1. Installa dipendenze base, `ufw`, `cron`, `sudo`, `curl`, `unzip`, `iproute2` e Temurin 25.
-2. Crea l'utente dedicato `hytale`.
-3. Scarica ed estrae Hytale Downloader CLI.
-4. Esegue il downloader come utente `hytale`.
-5. Estrae lo zip server generato e ripristina il bit eseguibile di `start.sh`.
-6. Copia `config/jvm.options` in `/home/hytale/hytale/jvm.options`.
-7. Installa `/etc/systemd/system/hytale-server.service`.
-8. Apre `UDP 5520` con UFW.
-9. Installa `/usr/local/sbin/hytale-autoupdate.sh` e cron giornaliero alle 02:00.
-10. Imposta timezone `Europe/Rome`.
-11. Avvia il servizio e stampa le verifiche finali.
+1. Installs base dependencies, `ufw`, `cron`, `sudo`, `curl`, `unzip`, `iproute2`, and Temurin 25.
+2. Creates the dedicated `hytale` user.
+3. Downloads and extracts the Hytale Downloader CLI.
+4. Runs the downloader as the `hytale` user.
+5. Extracts the generated server ZIP and restores the executable bit on `start.sh`.
+6. Copies `config/jvm.options` to `/home/hytale/hytale/jvm.options`.
+7. Installs `/etc/systemd/system/hytale-server.service`.
+8. Opens `UDP 5520` with UFW.
+9. Installs `/usr/local/sbin/hytale-autoupdate.sh` and a daily 02:00 cron entry.
+10. Sets the timezone to `Europe/Rome`.
+11. Starts the service and prints final checks.
 
-## Prima autenticazione OAuth
+## First OAuth authentication
 
-Il server richiede una prima autenticazione manuale:
+The server requires a first manual authentication:
 
 ```bash
 sudo systemctl stop hytale-server
 sudo -u hytale -H bash -lc 'cd /home/hytale/hytale && ./start.sh'
 ```
 
-Dentro la console Hytale:
+Inside the Hytale console:
 
 ```text
 /auth login device
@@ -88,7 +119,7 @@ Dentro la console Hytale:
 /auth status
 ```
 
-Stato atteso:
+Expected status:
 
 ```text
 Session Token: Present
@@ -96,51 +127,51 @@ Identity Token: Present
 Credentials saved using: Encrypted
 ```
 
-Poi:
+Then stop the server from the console:
 
 ```text
 /stop
 ```
 
-E riavvia il servizio:
+And restart the service:
 
 ```bash
 sudo systemctl start hytale-server
 ```
 
-## Update manuale e automatico
+## Manual and automatic updates
 
-Update manuale:
+Manual update:
 
 ```bash
 ./hytale update
 ```
 
-Cron automatico root installato:
+Installed root cron entry:
 
 ```cron
 0 2 * * * /usr/local/sbin/hytale-autoupdate.sh >> /var/log/hytale-autoupdate.log 2>&1
 ```
 
-Log update:
+Update log:
 
 ```bash
 tail -n 50 /var/log/hytale-autoupdate.log
 ```
 
-Lo script usa `flock`, ferma il servizio, confronta versione installata e online, scarica solo se serve, estrae con overwrite, ripristina `chmod +x start.sh`, corregge ownership e riavvia il servizio.
+The script uses `flock`, stops the service, compares installed and online versions, downloads only when needed, extracts with overwrite, restores `chmod +x start.sh`, fixes ownership, and restarts the service.
 
-## Backup e restore
+## Backup and restore
 
-Hytale può essere avviato con backup integrati `--backup --backup-dir backups --backup-frequency 30`, con salvataggi ogni 30 minuti in `Server/backups`.
+Hytale can be started with built-in backups using `--backup --backup-dir backups --backup-frequency 30`, creating saves every 30 minutes in `Server/backups`.
 
-Backup manuale del manager:
+Manual manager backup:
 
 ```bash
 ./hytale backup
 ```
 
-Include, se presenti:
+Includes, when present:
 
 - `/home/hytale/hytale/Server/config.json`
 - `/home/hytale/hytale/Server/permissions.json`
@@ -149,7 +180,7 @@ Include, se presenti:
 - `/home/hytale/hytale/Server/universe`
 - `/home/hytale/hytale/Server/backups`
 
-Esclude token e credenziali: `auth.enc`, `.hytale-downloader-credentials.json*`.
+Excludes tokens and credentials: `auth.enc`, `.hytale-downloader-credentials.json*`.
 
 Restore:
 
@@ -157,9 +188,9 @@ Restore:
 ./hytale restore /home/hytale/backups/manual/hytale-backup-YYYYmmdd-HHMMSS.tar.gz
 ```
 
-## Firewall e porte
+## Firewall and ports
 
-Hytale usa QUIC su UDP, non TCP.
+Hytale uses QUIC over UDP, not TCP.
 
 ```bash
 sudo ufw allow 5520/udp
@@ -169,20 +200,20 @@ ss -lunp | grep 5520
 
 ## Proxmox LXC notes
 
-Consigli rapidi:
+Quick recommendations:
 
-- Template Ubuntu 24.04 LTS.
-- 8 core e 32 GB RAM se vuoi usare il profilo JVM incluso.
-- Disco almeno 80 GB, meglio 120 GB o più.
-- Container con nesting/keyctl se richiesto dalla tua policy Proxmox.
-- Se `timedatectl` non funziona nel container, imposta timezone dal nodo Proxmox o verifica `/etc/timezone`.
-- Apri/forwarda UDP 5520 anche su firewall Proxmox, router e cloud provider.
+- Ubuntu 24.04 LTS template.
+- 8 cores and 32 GB RAM if you want to use the included JVM profile.
+- At least 80 GB disk, preferably 120 GB or more.
+- Enable nesting/keyctl if required by your Proxmox policy.
+- If `timedatectl` does not work in the container, set the timezone from the Proxmox node or verify `/etc/timezone`.
+- Open/forward UDP 5520 on the Proxmox firewall, router, and cloud provider too.
 
-## Troubleshooting rapido
+## Troubleshooting quick reference
 
 ### `status=203/EXEC`
 
-Causa più comune: `start.sh` non è eseguibile.
+Most common cause: `start.sh` is not executable.
 
 ```bash
 sudo chmod +x /home/hytale/hytale/start.sh
@@ -191,20 +222,20 @@ sudo systemctl restart hytale-server
 
 ### `No server tokens configured`
 
-Auth assente o scaduta. Rifai login manuale:
+Authentication is missing or expired. Perform manual login again:
 
 ```text
 /auth login device
 /auth persistence Encrypted
 ```
 
-### `invalid_grant` o `refresh token expired`
+### `invalid_grant` or `refresh token expired`
 
-Token OAuth scaduto o revocato. Rifai login manuale da console interattiva.
+The OAuth token is expired or revoked. Repeat manual login from an interactive console.
 
 ### Downloader: `unexpected end of JSON input`
 
-Credenziali downloader corrotte:
+Downloader credentials are corrupted:
 
 ```bash
 sudo rm -f /home/hytale/hytale/.hytale-downloader-credentials.json*
@@ -213,14 +244,14 @@ sudo -u hytale -H bash -lc 'cd /home/hytale/hytale && ./hytale-downloader-linux-
 
 ### `Skipping pack at Hytale_Shop: missing or invalid manifest.json`
 
-Dentro `Server/mods` c'è una cartella non valida come mod:
+There is an invalid mod-like folder inside `Server/mods`:
 
 ```bash
 sudo mkdir -p /home/hytale/hytale/Server/data
 sudo mv /home/hytale/hytale/Server/mods/Hytale_Shop /home/hytale/hytale/Server/data/
 ```
 
-## Verifiche post-installazione
+## Post-installation checks
 
 ```bash
 java --version
@@ -230,24 +261,34 @@ sudo -u hytale -H bash -lc 'cd /home/hytale/hytale && ./hytale-downloader-linux-
 tail -n 50 /var/log/hytale-autoupdate.log
 ```
 
-## Documentazione
+## Documentation
 
-- [Installazione](docs/install.md)
-- [Prima autenticazione](docs/first-auth.md)
+The current docs are written in Italian. English docs are planned.
+
+- [Installation](docs/install.md)
+- [First authentication](docs/first-auth.md)
 - [Update](docs/update.md)
 - [Backup](docs/backup.md)
 - [Restore](docs/restore.md)
-- [OP e permessi](docs/op-and-permissions.md)
+- [OP and permissions](docs/op-and-permissions.md)
 - [Whitelist](docs/whitelist.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [Proxmox LXC](docs/proxmox-lxc.md)
+- [Roadmap](docs/roadmap.md)
+- [Changelog](CHANGELOG.md)
+- [Release checklist](RELEASE.md)
 
 ## FAQ
 
-**Posso committare il server scaricato?** No. Zip, `Server/`, `Assets.zip`, `auth.enc` e credenziali sono esclusi e non vanno pubblicati.
+**Can I commit the downloaded server?** No. ZIP files, `Server/`, `Assets.zip`, `auth.enc`, and credentials are excluded and must not be published.
 
-**La porta è TCP o UDP?** UDP 5520.
+**Is the port TCP or UDP?** UDP 5520.
 
-**Perché l'installazione può fermarsi al downloader?** Il downloader/server può richiedere rete e autenticazione valida. Completa i passaggi OAuth manuali se richiesto.
+**Why can installation stop at the downloader step?** The downloader/server may require network access and valid authentication. Complete the manual OAuth steps if requested.
 
-**Posso cambiare RAM JVM?** Sì, modifica `/home/hytale/hytale/jvm.options` o `config/jvm.options` prima dell'installazione.
+**Can I change JVM RAM?** Yes, edit `/home/hytale/hytale/jvm.options` or `config/jvm.options` before installation.
+
+
+## License
+
+Released under the [MIT License](LICENSE).

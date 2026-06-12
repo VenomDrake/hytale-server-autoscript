@@ -1,5 +1,8 @@
 # Troubleshooting
 
+> This documentation is currently written in Italian. English docs are planned.
+
+
 ## `status=203/EXEC`
 
 Causa più comune: `start.sh` non eseguibile.

@@ -1,5 +1,8 @@
 # Backup
 
+> This documentation is currently written in Italian. English docs are planned.
+
+
 Il server può gestire backup integrati con:
 
 ```text

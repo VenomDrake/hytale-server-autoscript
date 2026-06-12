@@ -1,5 +1,8 @@
 # Proxmox LXC
 
+> This documentation is currently written in Italian. English docs are planned.
+
+
 Configurazione consigliata:
 
 - Ubuntu 24.04 LTS.

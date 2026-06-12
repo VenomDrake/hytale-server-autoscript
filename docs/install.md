@@ -1,5 +1,8 @@
 # Installazione
 
+> This documentation is currently written in Italian. English docs are planned.
+
+
 Sistema consigliato: Ubuntu 24.04 LTS, anche in LXC Proxmox.
 
 ```bash

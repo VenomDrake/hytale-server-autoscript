@@ -1,5 +1,8 @@
 # Prima autenticazione OAuth
 
+> This documentation is currently written in Italian. English docs are planned.
+
+
 Il server Hytale richiede autenticazione OAuth manuale al primo avvio.
 
 ```bash

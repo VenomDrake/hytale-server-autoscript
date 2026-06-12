@@ -1,5 +1,8 @@
 # OP e permessi
 
+> This documentation is currently written in Italian. English docs are planned.
+
+
 Console manuale:
 
 ```bash

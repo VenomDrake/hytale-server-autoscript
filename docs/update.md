@@ -1,5 +1,8 @@
 # Update
 
+> This documentation is currently written in Italian. English docs are planned.
+
+
 Update manuale:
 
 ```bash

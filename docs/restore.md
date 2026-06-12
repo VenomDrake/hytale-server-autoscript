@@ -1,5 +1,8 @@
 # Restore
 
+> This documentation is currently written in Italian. English docs are planned.
+
+
 Ripristina un backup manuale:
 
 ```bash
