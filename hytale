@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SERVICE_NAME="${SERVICE_NAME:-hytale-server}"
+HT_USER="${HT_USER:-hytale}"
+HT_HOME="${HT_HOME:-/home/${HT_USER}/hytale}"
+DL_BIN="${DL_BIN:-${HT_HOME}/hytale-downloader-linux-amd64}"
+AUTUPDATE="${AUTUPDATE:-/usr/local/sbin/hytale-autoupdate.sh}"
+
+usage() {
+  cat <<USAGE
+Uso: ./hytale <comando>
+
+Comandi:
+  start         Avvia hytale-server
+  stop          Ferma hytale-server
+  restart       Riavvia hytale-server
+  status        Mostra stato systemd
+  logs          Segue i log journalctl
+  console       Avvia console interattiva manuale
+  update        Esegue autoupdate manuale
+  backup        Crea backup manuale tar.gz
+  restore FILE  Ripristina backup manuale
+  monitor       Mostra monitor sintetico
+  healthcheck   Controlla servizio, porta, processo, memoria, versione
+  version       Mostra versione installata e online
+  ports         Mostra porte UDP in ascolto
+  auth-help     Spiega la prima autenticazione OAuth
+USAGE
+}
+
+need_sudo() {
+  if [[ "${EUID}" -eq 0 ]]; then
+    "$@"
+  else
+    sudo "$@"
+  fi
+}
+
+installed_version() {
+  journalctl -u "$SERVICE_NAME" -b --no-pager 2>/dev/null \
+    | grep -i 'Booting up HytaleServer - Version:' \
+    | tail -n 1 \
+    | sed -n 's/.*Version: \([^,]*\).*/\1/p' \
+    || true
+}
+
+online_version() {
+  if [[ -x "$DL_BIN" ]]; then
+    timeout 45s sudo -u "$HT_USER" -H bash -lc "cd '$HT_HOME' && '$DL_BIN' -print-version" 2>/dev/null | tail -n 1 || true
+  fi
+}
+
+case "${1:-}" in
+  start) need_sudo systemctl start "$SERVICE_NAME" ;;
+  stop) need_sudo systemctl stop "$SERVICE_NAME" ;;
+  restart) need_sudo systemctl restart "$SERVICE_NAME" ;;
+  status) systemctl status "$SERVICE_NAME" --no-pager ;;
+  logs) journalctl -u "$SERVICE_NAME" -f ;;
+  console)
+    need_sudo systemctl stop "$SERVICE_NAME" || true
+    echo "Console manuale. Usa /stop per uscire, poi ./hytale start."
+    sudo -u "$HT_USER" -H bash -lc "cd '$HT_HOME' && ./start.sh"
+    ;;
+  update) need_sudo "$AUTUPDATE" ;;
+  backup) need_sudo "$(dirname "$0")/backup.sh" ;;
+  restore)
+    if [[ -z "${2:-}" ]]; then echo "Serve un archivio: ./hytale restore FILE" >&2; exit 1; fi
+    need_sudo "$(dirname "$0")/restore.sh" "$2"
+    ;;
+  monitor) "$(dirname "$0")/monitor.sh" ;;
+  healthcheck) "$(dirname "$0")/scripts/healthcheck.sh" ;;
+  version)
+    echo "Versione installata: $(installed_version || true)"
+    echo "Versione online: $(online_version || true)"
+    ;;
+  ports) ss -lunp | grep -E '(:5520|State)' || true ;;
+  auth-help)
+    cat <<AUTH
+Prima autenticazione OAuth Hytale:
+  sudo systemctl stop ${SERVICE_NAME}
+  sudo -u ${HT_USER} -H bash -lc 'cd ${HT_HOME} && ./start.sh'
+
+Dentro la console Hytale:
+  /auth login device
+  /auth persistence Encrypted
+  /auth status
+
+Stato corretto:
+  Session Token: Present
+  Identity Token: Present
+  Credentials saved using: Encrypted
+
+Poi:
+  /stop
+  sudo systemctl start ${SERVICE_NAME}
+
+Non committare mai auth.enc o .hytale-downloader-credentials.json.
+AUTH
+    ;;
+  -h|--help|help|"") usage ;;
+  *) echo "Comando sconosciuto: $1" >&2; usage; exit 1 ;;
+esac

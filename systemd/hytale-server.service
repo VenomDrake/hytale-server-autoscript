@@ -1,0 +1,15 @@
+[Unit]
+Description=Hytale Dedicated Server
+After=network.target
+
+[Service]
+Type=simple
+User=hytale
+WorkingDirectory=/home/hytale/hytale
+ExecStart=/home/hytale/hytale/start.sh
+Restart=always
+RestartSec=10
+LimitNOFILE=100000
+
+[Install]
+WantedBy=multi-user.target
